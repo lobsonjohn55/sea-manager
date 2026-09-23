@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SEA Manager 2026/27</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#071018;color:#fff;font-family:Arial,sans-serif}
+header{background:#0d1824;padding:20px;border-bottom:1px solid #263545}
+.container{max-width:950px;margin:auto;padding:16px}
+.logo{font-size:25px;font-weight:bold;color:#5de6ff}
+.season{color:#899bad;margin-top:5px}
+.page{display:none}.page.active{display:block}
+.card{background:#101b28;border:1px solid #26384a;border-radius:15px;padding:16px;margin-bottom:14px}
+button{border:0;border-radius:9px;padding:11px 14px;margin:3px;background:#1a2a3b;color:#fff;cursor:pointer}
+button:hover{background:#294158}
+.primary{background:#42d9f5;color:#061018;font-weight:bold}
+.team-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.team{width:100%;text-align:left}.team strong{display:block}.team small{color:#8495a8}
+.menu{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:18px}
+.manager-page{display:none}.manager-page.active{display:block}
+.player{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #263545}
+.player:last-child{border-bottom:0}.muted{color:#8495a8}
+.stat-table{width:100%;border-collapse:collapse}
+.stat-table th,.stat-table td{padding:10px 6px;border-bottom:1px solid #263545;text-align:left}
+.stat-table th{color:#7fdff0}
+.scoreboard{background:#050b12;border:2px solid #263c50;border-radius:18px;padding:22px;text-align:center}
+.score-teams{display:flex;justify-content:space-around;align-items:center;gap:10px}
+.score-team{width:40%;font-weight:bold}.score{font-size:45px;font-weight:bold;white-space:nowrap}
+.match-status{color:#5de6ff;font-weight:bold;margin-bottom:10px}
+.event{padding:10px;border-bottom:1px solid #263545}
+.goal{color:#62ff91}.assist{color:#7fdfff}
+.budget{font-size:20px;font-weight:bold;color:#71ff9b}
+.league-buttons{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:15px}
+.market-player{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;align-items:center;gap:8px;padding:12px 4px;border-bottom:1px solid #263545}
+.badge{background:#172b3d;padding:5px 8px;border-radius:7px;font-size:12px}
+@media(max-width:600px){
+.team-grid{grid-template-columns:1fr}
+.market-player{grid-template-columns:1fr 1fr}
+.score{font-size:34px}.score-team{font-size:14px}
+}
+</style>
+</head>
+<body>
+<header><div class="container">
+<div class="logo">⚽ SEA MANAGER</div>
+<div class="season">2026/27 • Manager Mode</div>
+</div></header>
+
+<div id="home" class="page active"><div class="container">
+<h2>🎮 เลือกสโมสร</h2>
+<div class="card">เลือกทีมเพื่อเริ่มฤดูกาล 2026/27</div>
+<div id="teams" class="team-grid"></div>
+</div></div>
+
+<div id="manager" class="page"><div class="container">
+<button onclick="goHome()">← เปลี่ยนทีม</button>
+<div class="card"><h2 id="myTeam">Team</h2><div class="muted">Manager Mode • 2026/27</div></div>
+
+<div class="menu">
+<button onclick="showPage('overview')">🏠 Overview</button>
+<button onclick="showPage('squad')">👥 Squad</button>
+<button onclick="showPage('match')">⚽ Play Match</button>
+<button onclick="showPage('market')">💰 Transfer Market</button>
+<button onclick="showPage('table')">🏆 Table</button>
+<button onclick="showPage('scorers')">👑 Scorers</button>
+<button onclick="showPage('assists')">🅰️ Assists</button>
+<button onclick="showPage('bestxi')">⭐ Best XI</button>
+</div>
+
+<div class="card" style="display:flex;flex-wrap:wrap;gap:6px">
+<button onclick="saveGame()">💾 Save Game</button>
+<button onclick="loadGame()">📂 Load Game</button>
+<button onclick="deleteSave()">🗑️ Delete Save</button>
+</div>
+
+<div id="overview" class="manager-page active">
+<div class="card"><h2>📊 Season Overview</h2>
+<div class="player"><span>Matches</span><b id="matches">0</b></div>
+<div class="player"><span>Wins</span><b id="wins">0</b></div>
+<div class="player"><span>Draws</span><b id="draws">0</b></div>
+<div class="player"><span>Losses</span><b id="losses">0</b></div>
+<div class="player"><span>Points</span><b id="points">0</b></div>
+</div>
+<div class="card"><h3>💰 Transfer Budget</h3><div class="budget" id="budgetText">€20.0M</div></div>
+</div>
+
+<div id="squad" class="manager-page">
+<div class="card"><h2>👥 Squad</h2><div id="squadList"></div></div>
+</div>
+
+<div id="match" class="manager-page">
+<div class="scoreboard">
+<div class="match-status" id="matchStatus">MATCHDAY 1</div>
+<div class="score-teams">
+<div class="score-team" id="homeTeam">YOUR TEAM</div>
+<div class="score" id="score">0 - 0</div>
+<div class="score-team" id="awayTeam">OPPONENT</div>
+</div><br>
+<button class="primary" id="playButton" onclick="playMatch()">▶ PLAY MATCH</button>
+</div>
+<div class="card"><h3>📋 Match Events</h3><div id="matchEvents" class="muted">ยังไม่มีการแข่งขัน</div></div>
+</div>
+
+<div id="market" class="manager-page">
+<div class="card"><h2>💰 Transfer Market</h2>
+<div>Transfer Budget: <strong class="budget" id="marketBudget">€20.0M</strong></div></div>
+<div class="card"><h3>🌍 เลือกลีก</h3>
+<div class="league-buttons">
+<button onclick="selectLeague('Japan')">🇯🇵 Japan</button>
+<button onclick="selectLeague('South Korea')">🇰🇷 South Korea</button>
+<button onclick="selectLeague('China')">🇨🇳 China</button>
+<button onclick="selectLeague('Brazil')">🇧🇷 Brazil</button>
+<button onclick="selectLeague('Indonesia')">🇮🇩 Indonesia</button>
+<button onclick="selectLeague('Vietnam')">🇻🇳 Vietnam</button>
+<button onclick="selectLeague('Thailand')">🇹🇭 Thailand</button>
+<button onclick="selectLeague('Malaysia')">🇲🇾 Malaysia</button>
+<button onclick="selectLeague('Iran')">🇮🇷 Iran</button>
+<button onclick="selectLeague('Saudi Arabia')">🇸🇦 Saudi Arabia</button>
+<button onclick="selectLeague('UAE')">🇦🇪 UAE</button>
+<button onclick="selectLeague('Qatar')">🇶🇦 Qatar</button>
+</div></div>
+<div class="card"><h3 id="marketLeague">เลือกลีกเพื่อดูนักเตะ</h3><div id="marketList"></div></div>
+</div>
+
+<div id="table" class="manager-page">
+<div class="card"><h2>🏆 League Table</h2>
+<table class="stat-table"><thead><tr><th>#</th><th>Club</th><th>MP</th><th>PTS</th></tr></thead>
+<tbody id="tableBody"></tbody></table></div>
+</div>
+
+<div id="scorers" class="manager-page">
+<div class="card"><h2>👑 Top Scorers</h2>
+<table class="stat-table"><thead><tr><th>#</th><th>Player</th><th>Club</th><th>⚽</th></tr></thead>
+<tbody id="scorerBody"></tbody></table></div>
+</div>
+
+<div id="assists" class="manager-page">
+<div class="card"><h2>🅰️ Top Assists</h2>
+<table class="stat-table"><thead><tr><th>#</th><th>Player</th><th>Club</th><th>🅰️</th></tr></thead>
+<tbody id="assistBody"></tbody></table></div>
+</div>
+
+<div id="bestxi" class="manager-page">
+<div class="card"><h2>⭐ Best XI</h2><div id="bestXIList"></div></div>
+</div>
+</div></div>
+
+<script>
+const clubs=[
+"Buriram United","Port FC","Ratchaburi FC","BG Pathum United",
+"True Bangkok United","PT Prachuap FC","Chiangrai United","Rayong FC",
+"Chonburi FC","Uthai Thani FC","Lamphun Warriors","Muangthong United",
+"Sukhothai FC","Ayutthaya United","Nakhonratchasima FC","Rasisalai United"
+];
+
+let selectedClub="";
+let budget=20;
+
+let stats={matches:0,wins:0,draws:0,losses:0,points:0};
+
+let players=[
+{name:"Player A",position:"GK",rating:75,goals:0,assists:0,value:3,wage:10},
+{name:"Player B",position:"DF",rating:77,goals:0,assists:0,value:4,wage:12},
+{name:"Player C",position:"DF",rating:76,goals:0,assists:0,value:3,wage:10},
+{name:"Player D",position:"MF",rating:80,goals:0,assists:0,value:5,wage:15},
+{name:"Player E",position:"MF",rating:78,goals:0,assists:0,value:4,wage:12},
+{name:"Player F",position:"FW",rating:82,goals:0,assists:0,value:6,wage:18}
+];
+
+const transferPlayers=[
+{name:"Kaito Sato",league:"Japan",club:"Tokyo FC",pos:"FW",ovr:81,value:5,wage:20},
+{name:"Ren Ito",league:"Japan",club:"Osaka FC",pos:"MF",ovr:79,value:4,wage:16},
+{name:"Min-Jun Kim",league:"South Korea",club:"Seoul FC",pos:"FW",ovr:82,value:6,wage:24},
+{name:"Ji-Hoon Lee",league:"South Korea",club:"Busan FC",pos:"MF",ovr:78,value:3,wage:15},
+{name:"Wei Zhang",league:"China",club:"Shanghai FC",pos:"FW",ovr:80,value:5,wage:20},
+{name:"Li Chen",league:"China",club:"Beijing FC",pos:"DF",ovr:77,value:3,wage:14},
+{name:"Lucas Silva",league:"Brazil",club:"Sao Paulo FC",pos:"MF",ovr:84,value:8,wage:30},
+{name:"Rafael Costa",league:"Brazil",club:"Rio FC",pos:"FW",ovr:82,value:7,wage:27},
+{name:"Andi Pratama",league:"Indonesia",club:"Jakarta FC",pos:"FW",ovr:76,value:2,wage:8},
+{name:"Bima Putra",league:"Indonesia",club:"Bandung FC",pos:"MF",ovr:75,value:2,wage:8},
+{name:"Nguyen Minh",league:"Vietnam",club:"Hanoi FC",pos:"FW",ovr:78,value:3,wage:10},
+{name:"Tran Duc",league:"Vietnam",club:"Saigon FC",pos:"MF",ovr:76,value:2,wage:8},
+{name:"Niran K.",league:"Thailand",club:"Bangkok FC",pos:"MF",ovr:79,value:4,wage:15},
+{name:"Thanawat P.",league:"Thailand",club:"Chiangmai FC",pos:"FW",ovr:77,value:3,wage:12},
+{name:"Amir Hosseini",league:"Iran",club:"Tehran FC",pos:"FW",ovr:81,value:5,wage:18},
+{name:"Reza Karim",league:"Iran",club:"Isfahan FC",pos:"DF",ovr:78,value:3,wage:12},
+{name:"Faisal Ahmed",league:"Saudi Arabia",club:"Riyadh FC",pos:"FW",ovr:85,value:10,wage:40},
+{name:"Salem Ali",league:"Saudi Arabia",club:"Jeddah FC",pos:"MF",ovr:82,value:7,wage:30},
+{name:"Omar Hassan",league:"UAE",club:"Dubai FC",pos:"FW",ovr:80,value:5,wage:20},
+{name:"Khalid Mansoor",league:"UAE",club:"Abu Dhabi FC",pos:"MF",ovr:78,value:4,wage:16},
+{name:"Akmal Rahman",league:"Malaysia",club:"Kuala Lumpur FC",pos:"FW",ovr:75,value:2,wage:8},
+{name:"Hakim Noor",league:"Malaysia",club:"Johor FC",pos:"MF",ovr:78,value:3,wage:11},
+{name:"Yousef Ali",league:"Qatar",club:"Doha FC",pos:"FW",ovr:83,value:7,wage:28},
+{name:"Hamad Saeed",league:"Qatar",club:"Al Rayyan FC",pos:"MF",ovr:80,value:5,wage:20}
+];
+
+const teamsBox=document.getElementById("teams");
+
+clubs.forEach(function(club){
+let button=document.createElement("button");
+button.className="card team";
+button.innerHTML="<strong>⚽ "+club+"</strong><small>2026/27</small>";
+button.onclick=function(){selectTeam(club)};
+teamsBox.appendChild(button);
+});
+
+window.addEventListener("load",function(){
+if(localStorage.getItem("seaManagerSave")){
+const btn=document.createElement("button");
+btn.className="card";
+btn.style.width="100%";
+btn.innerHTML="📂 <strong>มีเกมที่บันทึกไว้</strong><br><small class='muted'>กดเพื่อโหลดเกมล่าสุด</small>";
+btn.onclick=loadGame;
+document.getElementById("teams").prepend(btn);
+}
+});
+
+function selectTeam(club){
+selectedClub=club;
+document.getElementById("home").classList.remove("active");
+document.getElementById("manager").classList.add("active");
+document.getElementById("myTeam").textContent=club;
+document.getElementById("homeTeam").textContent=club;
+renderAll();
+autoSave();
+}
+
+function goHome(){
+document.getElementById("manager").classList.remove("active");
+document.getElementById("home").classList.add("active");
+}
+
+function showPage(page){
+document.querySelectorAll(".manager-page").forEach(function(x){x.classList.remove("active")});
+document.getElementById(page).classList.add("active");
+}
+
+function renderSquad(){
+let box=document.getElementById("squadList");
+box.innerHTML="";
+players.forEach(function(p,index){
+box.innerHTML+="<div class='player'><span>"+p.position+" — "+p.name+
+"<br><small class='muted'>OVR "+p.rating+" • ⚽ "+p.goals+
+" • 🅰️ "+p.assists+" • €"+p.wage+"K/week</small></span>"+
+"<span><b>€"+p.value+"M</b><br><button onclick='sellPlayer("+index+")'>💰 SELL</button></span></div>";
+});
+}
+
+function playMatch(){
+let button=document.getElementById("playButton");
+button.disabled=true;
+button.textContent="⏳ PLAYING...";
+
+let opponent=clubs[Math.floor(Math.random()*clubs.length)];
+while(opponent===selectedClub) opponent=clubs[Math.floor(Math.random()*clubs.length)];
+
+document.getElementById("awayTeam").textContent=opponent;
+
+setTimeout(function(){
+let myGoals=Math.floor(Math.random()*4);
+let oppGoals=Math.floor(Math.random()*4);
+document.getElementById("score").textContent=myGoals+" - "+oppGoals;
+stats.matches++;
+
+if(myGoals>oppGoals){stats.wins++;stats.points+=3}
+else if(myGoals===oppGoals){stats.draws++;stats.points++}
+else stats.losses++;
+
+createMatchEvents(myGoals,oppGoals,opponent);
+document.getElementById("matchStatus").textContent="FULL TIME";
+button.disabled=false;
+button.textContent="▶ PLAY AGAIN";
+renderAll();
+autoSave();
+},1000);
+}
+
+function createMatchEvents(myGoals,oppGoals,opponent){
+let box=document.getElementById("matchEvents");
+box.innerHTML="";
+
+for(let i=0;i<myGoals;i++){
+let scorer=players[Math.floor(Math.random()*players.length)];
+scorer.goals++;
+let assist=players[Math.floor(Math.random()*players.length)];
+if(assist.name!==scorer.name) assist.assists++;
+let minute=Math.floor(Math.random()*85)+5;
+
+box.innerHTML+="<div class='event'><span class='goal'>⚽ "+minute+"' "+scorer.name+"</span> ";
+if(assist.name!==scorer.name) box.innerHTML+="<span class='assist'>🅰️ "+assist.name+"</span>";
+box.innerHTML+="</div>";
+}
+
+for(let i=0;i<oppGoals;i++){
+let minute=Math.floor(Math.random()*85)+5;
+box.innerHTML+="<div class='event'>⚽ "+minute+"' "+opponent+"</div>";
+}
+
+if(myGoals===0 && oppGoals===0) box.innerHTML="<div class='event'>🛡️ 0 - 0 • ไม่มีประตู</div>";
+}
+
+function updateOverview(){
+document.getElementById("matches").textContent=stats.matches;
+document.getElementById("wins").textContent=stats.wins;
+document.getElementById("draws").textContent=stats.draws;
+document.getElementById("losses").textContent=stats.losses;
+document.getElementById("points").textContent=stats.points;
+document.getElementById("budgetText").textContent="€"+budget.toFixed(1)+"M";
+document.getElementById("marketBudget").textContent="€"+budget.toFixed(1)+"M";
+}
+
+function renderTable(){
+let body=document.getElementById("tableBody");
+body.innerHTML="";
+let rows=[];
+
+clubs.forEach(function(club){
+let mp=0,pts=0;
+if(club===selectedClub){mp=stats.matches;pts=stats.points}
+rows.push({club:club,mp:mp,pts:pts});
+});
+
+rows.sort(function(a,b){return b.pts-a.pts});
+rows.forEach(function(row,index){
+body.innerHTML+="<tr><td>"+(index+1)+"</td><td>"+row.club+"</td><td>"+row.mp+"</td><td>"+row.pts+"</td></tr>";
+});
+}
+
+function renderScorers(){
+let body=document.getElementById("scorerBody");
+body.innerHTML="";
+let list=[];
+
+players.forEach(function(p){list.push({name:p.name,club:selectedClub,goals:p.goals})});
+transferPlayers.forEach(function(p){list.push({name:p.name,club:p.club,goals:0})});
+list.sort(function(a,b){return b.goals-a.goals});
+
+list.forEach(function(p,i){
+body.innerHTML+="<tr><td>"+(i+1)+"</td><td>"+p.name+"</td><td>"+p.club+"</td><td>"+p.goals+"</td></tr>";
+});
+}
+
+function renderAssists(){
+let body=document.getElementById("assistBody");
+body.innerHTML="";
+let list=[];
+
+players.forEach(function(p){list.push({name:p.name,club:selectedClub,assists:p.assists})});
+transferPlayers.forEach(function(p){list.push({name:p.name,club:p.club,assists:0})});
+list.sort(function(a,b){return b.assists-a.assists});
+
+list.forEach(function(p,i){
+body.innerHTML+="<tr><td>"+(i+1)+"</td><td>"+p.name+"</td><td>"+p.club+"</td><td>"+p.assists+"</td></tr>";
+});
+}
+
+function renderBestXI(){
+let box=document.getElementById("bestXIList");
+box.innerHTML="";
+let sorted=[...players];
+
+sorted.sort(function(a,b){
+return (b.goals+b.assists+b.rating/10)-(a.goals+a.assists+a.rating/10);
+});
+
+sorted.forEach(function(p){
+box.innerHTML+="<div class='player'><span>"+p.position+"</span><b>"+p.name+"</b></div>";
+});
+}
+
+function selectLeague(league){
+document.getElementById("marketLeague").textContent="🌍 "+league;
+let list=document.getElementById("marketList");
+list.innerHTML="";
+
+let found=transferPlayers.filter(function(p){return p.league===league});
+
+found.forEach(function(p){
+let row=document.createElement("div");
+row.className="market-player";
+row.innerHTML="<div><b>"+p.name+"</b><br><span class='muted'>"+p.club+"</span></div>"+
+"<span class='badge'>"+p.pos+"</span><span>OVR "+p.ovr+"</span>"+
+"<span>€"+p.value+"M<br><small>€"+p.wage+"K/week</small></span>";
+
+let buy=document.createElement("button");
+buy.className="primary";
+buy.textContent="🛒 BUY";
+buy.onclick=function(){buyPlayer(p,buy)};
+row.appendChild(buy);
+list.appendChild(row);
+});
+}
+
+function buyPlayer(player,button){
+if(budget<player.value){alert("เงินไม่พอสำหรับนักเตะคนนี้");return}
+
+budget-=player.value;
+
+players.push({
+name:player.name,
+position:player.pos,
+rating:player.ovr,
+goals:0,
+assists:0,
+value:player.value,
+wage:player.wage
+});
+
+button.disabled=true;
+button.textContent="✓ BOUGHT";
+
+updateOverview();
+renderSquad();
+renderBestXI();
+renderScorers();
+renderAssists();
+
+alert("ซื้อ "+player.name+" เข้าทีมเรียบร้อย!");
+}
+
+function sellPlayer(index){
+if(players.length<=1){alert("ต้องเหลือนักเตะอย่างน้อย 1 คน");return}
+
+let player=players[index];
+let sellPrice=player.value*0.8;
+budget+=sellPrice;
+players.splice(index,1);
+
+alert("ขาย "+player.name+" ได้ €"+sellPrice.toFixed(1)+"M");
+renderAll();
+}
+
+function saveGame(showMessage=true){
+const saveData={
+selectedClub:selectedClub,
+budget:budget,
+stats:stats,
+players:players,
+lastOpponent:document.getElementById("awayTeam")?.textContent||"OPPONENT",
+lastScore:document.getElementById("score")?.textContent||"0 - 0",
+lastStatus:document.getElementById("matchStatus")?.textContent||"MATCHDAY 1",
+lastEvents:document.getElementById("matchEvents")?.innerHTML||"ยังไม่มีการแข่งขัน"
+};
+localStorage.setItem("seaManagerSave",JSON.stringify(saveData));
+if(showMessage) alert("💾 บันทึกเกมเรียบร้อยแล้ว");
+}
+
+function loadGame(){
+const raw=localStorage.getItem("seaManagerSave");
+if(!raw){alert("ยังไม่มีเกมที่บันทึกไว้");return;}
+try{
+const data=JSON.parse(raw);
+selectedClub=data.selectedClub||"";
+budget=Number(data.budget ?? 20);
+stats=data.stats||{matches:0,wins:0,draws:0,losses:0,points:0};
+players=Array.isArray(data.players)?data.players:players;
+if(selectedClub){
+document.getElementById("home").classList.remove("active");
+document.getElementById("manager").classList.add("active");
+document.getElementById("myTeam").textContent=selectedClub;
+document.getElementById("homeTeam").textContent=selectedClub;
+document.getElementById("awayTeam").textContent=data.lastOpponent||"OPPONENT";
+document.getElementById("score").textContent=data.lastScore||"0 - 0";
+document.getElementById("matchStatus").textContent=data.lastStatus||"MATCHDAY 1";
+document.getElementById("matchEvents").innerHTML=data.lastEvents||"ยังไม่มีการแข่งขัน";
+renderAll();
+alert("📂 โหลดเกมเรียบร้อยแล้ว");
+}else{alert("เซฟนี้ยังไม่ได้เลือกสโมสร");}
+}catch(e){alert("ไม่สามารถโหลดเซฟได้");}
+}
+
+function deleteSave(){
+if(!localStorage.getItem("seaManagerSave")){alert("ยังไม่มีเซฟเกม");return;}
+if(confirm("ต้องการลบเซฟเกมนี้ใช่ไหม?")){localStorage.removeItem("seaManagerSave");alert("🗑️ ลบเซฟแล้ว");}
+}
+
+function autoSave(){
+if(selectedClub) saveGame(false);
+}
+
+function renderAll(){
+renderSquad();
+renderTable();
+renderScorers();
+renderAssists();
+renderBestXI();
+updateOverview();
+}
+
+renderTable();
+</script>
+</body>
+</html>
